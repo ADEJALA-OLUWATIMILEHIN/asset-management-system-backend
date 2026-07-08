@@ -22,6 +22,9 @@ Department.hasMany(User, { foreignKey: "department_id", as: "members" });
 Asset.belongsTo(Vendor, { foreignKey: "vendorId", as: "vendor" });
 Vendor.hasMany(Asset, { foreignKey: "vendorId", as: "assets" });
 
+Vendor.belongsTo(User, { foreignKey: "userId", as: "user" });
+User.hasOne(Vendor, { foreignKey: "userId", as: "staffProfile" });
+
 // ── Asset ↔ User (custodian) ──────────────────────────────────────────────────
 Asset.belongsTo(User, { foreignKey: "custodianId", as: "custodian" });
 User.hasMany(Asset, { foreignKey: "custodianId", as: "custodiedAssets" });

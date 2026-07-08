@@ -1,7 +1,26 @@
 import express, { Request, Response } from "express";
+import fs from "fs";
+import path from "path";
+import multer from "multer";
 import { Asset, Document, User } from "../models";
 
 const router = express.Router();
+const uploadDir = path.resolve(__dirname, "../uploads/documents");
+
+fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, callback) => callback(null, uploadDir),
+  filename: (_req, file, callback) => {
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+    callback(null, `${Date.now()}-${safeName}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 25 * 1024 * 1024 },
+});
 
 const allowedDocTypes = [
   "VEHICLE_INSURANCE",
@@ -110,6 +129,21 @@ router.get("/", async (req: Request, res: Response) => {
     console.error("Error fetching documents:", error);
     res.status(500).json({ error: "Error fetching documents" });
   }
+});
+
+router.post("/upload", upload.single("file"), async (req: Request, res: Response) => {
+  if (!req.file) {
+    res.status(400).json({ error: "file is required" });
+    return;
+  }
+
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+  res.status(201).json({
+    fileUrl: `${baseUrl}/uploads/documents/${req.file.filename}`,
+    fileSizeBytes: req.file.size,
+    mimeType: req.file.mimetype || null,
+  });
 });
 
 router.get("/:id", async (req: Request, res: Response) => {

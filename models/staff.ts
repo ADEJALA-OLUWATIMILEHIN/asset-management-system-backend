@@ -35,7 +35,7 @@ Staff.init(
             type: DataTypes.INTEGER,
             allowNull: true,
             references: {
-                model: "Users",
+                model: "users",
                 key: "id"
             }
         }

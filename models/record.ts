@@ -184,7 +184,7 @@ MaintenanceRecord.init(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: "vendors",
+        model: "staff",
         key: "id",
       },
     },

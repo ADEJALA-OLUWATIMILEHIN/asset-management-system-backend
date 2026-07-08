@@ -48,7 +48,7 @@ SystemSettings.init(
     defaultCurrency: {
       type: DataTypes.STRING(10),
       allowNull: false,
-      defaultValue: "USD",
+      defaultValue: "NGN",
     },
     timezone: {
       type: DataTypes.STRING,

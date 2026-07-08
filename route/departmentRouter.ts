@@ -24,18 +24,41 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 router.post("/new-department", async (req: Request, res: Response) => {
-  const { name, branch_location, manager_id } = req.body;
+  const { name, branch_location, branchLocation, manager_id, managerId } = req.body;
 
   if (!name) {
     res.status(400).json({ error: "Department name is required" });
     return;
   }
 
+  const requestedManagerId = manager_id ?? managerId;
+  const normalizedManagerId =
+    requestedManagerId === undefined || requestedManagerId === null || requestedManagerId === ""
+      ? null
+      : Number(requestedManagerId);
+
+  if (
+    normalizedManagerId !== null &&
+    (!Number.isInteger(normalizedManagerId) || normalizedManagerId < 1)
+  ) {
+    res.status(400).json({ error: "manager_id must be a valid user id" });
+    return;
+  }
+
   try {
+    if (normalizedManagerId !== null) {
+      const manager = await User.findByPk(normalizedManagerId);
+
+      if (!manager) {
+        res.status(400).json({ error: "Manager not found" });
+        return;
+      }
+    }
+
     const newDepartment = await Department.create({
-      name,
-      branch_location,
-      manager_id,
+      name: String(name).trim(),
+      branch_location: branch_location ?? branchLocation ?? null,
+      manager_id: normalizedManagerId,
     });
 
     res.status(201).json({

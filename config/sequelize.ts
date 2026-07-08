@@ -1,6 +1,8 @@
+import path from "path";
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
-dotenv.config();
+
+dotenv.config({ path: path.resolve(__dirname, "../.env"), override: true });
 
 const shouldUseSsl = process.env.DATABASE_SSL === "true" || process.env.NODE_ENV === "production";
 const sslConfig = shouldUseSsl
