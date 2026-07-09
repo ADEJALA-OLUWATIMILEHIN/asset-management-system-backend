@@ -41,8 +41,6 @@
     "@types/node": "^24.9.2",
     "@types/node-cron": "^3.0.11",
     "@types/swagger-jsdoc": "^6.0.4",
-    "@types/swagger-ui-express": "^4.1.8",
-    "sequelize-cli": "^6.6.3",
-    "tsx": "^4.21.0"
+    "@types/swagger-ui-express": "^4.1.8"
   }
 }
