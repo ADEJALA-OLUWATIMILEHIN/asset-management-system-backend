@@ -14,6 +14,7 @@ import documentRouter from "./route/documentRouter";
 import maintenanceRouter from "./route/maintenanceRouter";
 import calendarRouter from "./route/calendarRouter";
 import staffRouter from "./route/staffRouter";
+import { startScheduleAutomation } from "./services/scheduleAutomation";
 
 
 
@@ -49,6 +50,7 @@ const PORT = 3005;
 
 app.listen(PORT, '0.0.0.0', async() => {
   await sequelize.authenticate();
+  startScheduleAutomation();
   console.log(`Server is running on port ${PORT}`);
 });
 

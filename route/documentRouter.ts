@@ -3,6 +3,11 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 import { Asset, Document, User } from "../models";
+import {
+  applyDocumentExpiryStatus,
+  runDocumentExpirySweep,
+  syncDocumentCalendarEvent,
+} from "../services/scheduleAutomation";
 
 const router = express.Router();
 const uploadDir = path.resolve(__dirname, "../uploads/documents");
@@ -119,6 +124,8 @@ function validateDocumentPayload(payload: Record<string, any>, isCreate = false)
 
 router.get("/", async (req: Request, res: Response) => {
   try {
+    await runDocumentExpirySweep();
+
     const documents = await Document.findAll({
       include: documentIncludes,
       order: [["createdAt", "DESC"]],
@@ -164,6 +171,8 @@ router.get("/:id", async (req: Request, res: Response) => {
       return;
     }
 
+    await syncDocumentCalendarEvent(document);
+
     res.status(200).json({ document });
   } catch (error) {
     console.error("Error fetching document:", error);
@@ -172,7 +181,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 router.post("/new-document", async (req: Request, res: Response) => {
-  const payload = buildDocumentPayload(req.body);
+  const payload = applyDocumentExpiryStatus(buildDocumentPayload(req.body));
   const validationError = validateDocumentPayload(payload, true);
 
   if (validationError) {
@@ -182,6 +191,7 @@ router.post("/new-document", async (req: Request, res: Response) => {
 
   try {
     const newDocument = await Document.create(payload);
+    await syncDocumentCalendarEvent(newDocument);
 
     res.status(201).json({
       message: "Document created successfully",
@@ -214,7 +224,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     return;
   }
 
-  const payload = buildDocumentPayload(req.body, true);
+  const payload = applyDocumentExpiryStatus(buildDocumentPayload(req.body, true));
   const validationError = validateDocumentPayload(payload);
 
   if (validationError) {
@@ -231,6 +241,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     }
 
     await document.update(payload);
+    await syncDocumentCalendarEvent(document);
 
     res.status(200).json({
       message: "Document updated successfully",
@@ -271,6 +282,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return;
     }
 
+    await syncDocumentCalendarEvent({ id: document.id, expiryDate: null });
     await document.destroy();
 
     res.status(200).json({ message: "Document deleted successfully" });

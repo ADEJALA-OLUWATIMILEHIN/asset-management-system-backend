@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import { CalendarEvent, Asset, Document } from "../models";
 import { Op } from "sequelize";
+import { runScheduleAutomation } from "../services/scheduleAutomation";
 
 const router = express.Router();
 
@@ -13,6 +14,8 @@ const parseId = (value: unknown) => {
 // Get all calendar events
 router.get("/", async (req: Request, res: Response) => {
   try {
+    await runScheduleAutomation();
+
     const events = await CalendarEvent.findAll({
       include: [
         {
@@ -49,6 +52,8 @@ router.get("/month/:year/:month", async (req: Request, res: Response) => {
   }
 
   try {
+    await runScheduleAutomation();
+
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
@@ -85,6 +90,8 @@ router.get("/month/:year/:month", async (req: Request, res: Response) => {
 // Get statistics
 router.get("/stats", async (req: Request, res: Response) => {
   try {
+    await runScheduleAutomation();
+
     const total = await CalendarEvent.count();
     const renewals = await CalendarEvent.count({
       where: { eventType: "INSURANCE_RENEWAL" },

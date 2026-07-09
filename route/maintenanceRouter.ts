@@ -1,5 +1,9 @@
 import express, { Request, Response } from "express";
 import { MaintenanceRecord, Asset } from "../models";
+import {
+  runMaintenanceSweep,
+  syncMaintenanceCalendarEvent,
+} from "../services/scheduleAutomation";
 
 const router = express.Router();
 
@@ -12,6 +16,8 @@ const parseId = (value: unknown) => {
 // Get all maintenance records with asset details
 router.get("/", async (req: Request, res: Response) => {
   try {
+    await runMaintenanceSweep();
+
     const maintenanceRecords = await MaintenanceRecord.findAll({
       include: [
         {
@@ -33,6 +39,8 @@ router.get("/", async (req: Request, res: Response) => {
 // Get maintenance statistics
 router.get("/stats", async (req: Request, res: Response) => {
   try {
+    await runMaintenanceSweep();
+
     const stats = await MaintenanceRecord.findAll({
       attributes: ["status"],
       raw: true,
@@ -76,6 +84,8 @@ router.get("/:id", async (req: Request, res: Response) => {
       res.status(404).json({ error: "Maintenance record not found" });
       return;
     }
+
+    await syncMaintenanceCalendarEvent(maintenanceRecord);
 
     res.status(200).json({ maintenanceRecord });
   } catch (error) {
@@ -138,6 +148,7 @@ router.post("/new-maintenance", async (req: Request, res: Response) => {
       notes: notes ? String(notes).trim() : null,
       createdBy: createdByNum,
     });
+    await syncMaintenanceCalendarEvent(maintenanceRecord);
 
     res.status(201).json({
       message: "Maintenance record created successfully",
@@ -202,6 +213,7 @@ router.patch("/:id", async (req: Request, res: Response) => {
       ...(status && { status }),
       ...(notes !== undefined && { notes: notes ? String(notes).trim() : null }),
     });
+    await syncMaintenanceCalendarEvent(maintenanceRecord);
 
     res.status(200).json({
       message: "Maintenance record updated successfully",
